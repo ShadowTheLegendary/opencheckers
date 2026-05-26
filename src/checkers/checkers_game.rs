@@ -7,17 +7,19 @@ use crate::checkers::checkers_move::Square;
 pub const BOARD_HEIGHT: u64 = 8;
 pub const BOARD_WIDTH: u64 = 8;
 
-const MOVEGEN_OFFSETS: [(i32, i32); 4] = [(-1, -1), (1, -1), (1, 1), (-1, 1)];
+const RED_MOVEGEN_OFFSETS: [(i32, i32); 4] = [(-1, -1), (1, -1), (0, 0), (0, 0)];
+const BLACK_MOVEGEN_OFFSETS: [(i32, i32); 4] = [(1, 1), (-1, 1), (0, 0), (0, 0)];
+const KING_MOVEGEN_OFFSETS: [(i32, i32); 4] = [(-1, -1), (1, -1), (1, 1), (-1, 1)];
 
 pub const BLANK_CHECKER: Checker = Checker{occupied: false, color: CheckerColor::Black, rank: CheckerRank::Soldier};
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum CheckerColor {
     Black,
     Red
 }
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum CheckerRank {
     Soldier,
     King
@@ -75,9 +77,17 @@ impl Checker {
     fn get_moves(&self, game: &CheckersGame, sq: &Square) -> (Vec<CheckersMove>, bool) {
         let mut moves: Vec<CheckersMove> = Vec::new();
         let mut found_capture: bool = false;
+        let checker: Checker = game.get_checker(*sq);
 
         for i in 0..4 {
-            let potential_end =  sq.apply(&MOVEGEN_OFFSETS[i]);
+            let potential_end =  
+            match checker.rank {
+                CheckerRank::King => sq.apply(&KING_MOVEGEN_OFFSETS[i]),
+                CheckerRank::Soldier => {
+                    match checker.color {CheckerColor::Black => sq.apply(&BLACK_MOVEGEN_OFFSETS[i]), CheckerColor::Red => sq.apply(&RED_MOVEGEN_OFFSETS[i])}
+                }
+            };
+
             if !CheckersGame::in_bounds(potential_end) {
                 continue;
             }
@@ -99,6 +109,8 @@ impl Checker {
             if r#move.capture && !found_capture {
                 found_capture = true;
                 moves.clear();
+            } else if !r#move.capture && found_capture {
+                continue;
             }
 
             moves.push(r#move);
@@ -110,7 +122,7 @@ impl Checker {
 
 pub struct CheckersGame {
     data: [Checker; 64],
-    turn: CheckerColor,
+    pub turn: CheckerColor,
     forced_move: Option<Square>
 }
 
@@ -164,12 +176,12 @@ impl CheckersGame {
         if r#move.capture {
             let midpoint: Square = Square {
                 x: (r#move.start.x + r#move.end.x) / 2,
-                y: (r#move.start.x + r#move.end.x) / 2
+                y: (r#move.start.y + r#move.end.y) / 2
             };
 
             self.set_checker(midpoint, BLANK_CHECKER);
 
-            let (_checker_moves, capture) = self.get_checker(r#move.end).get_moves(self, &r#move.end);
+            let (_checker_moves, capture) = start_checker.get_moves(self, &r#move.end);
             if capture {
                 self.forced_move = Some(r#move.end);
                 forced_move = true;
@@ -177,7 +189,8 @@ impl CheckersGame {
         }
 
         if !forced_move {
-            self.turn = match self.turn { CheckerColor::Black => CheckerColor::Red, CheckerColor::Red => CheckerColor::Black }
+            self.turn = match self.turn { CheckerColor::Black => CheckerColor::Red, CheckerColor::Red => CheckerColor::Black };
+            self.forced_move = None;
         }
     }
 
@@ -225,6 +238,8 @@ impl CheckersGame {
                     if capture && !found_capture {
                         found_capture = true;
                         moves.clear();
+                    } else if !capture && found_capture {
+                        continue;
                     }
 
                     moves.append(&mut checker_moves);
@@ -241,6 +256,19 @@ impl CheckersGame {
         moves
     }
 
+    pub fn get_checker_legal_moves(&self, square: Square) -> Vec<CheckersMove> {
+        let moves: Vec<CheckersMove> = self.get_legal_moves();
+        let mut filtered_moves: Vec<CheckersMove> = Vec::new();
+
+        for r#move in &moves {
+            if r#move.start == square {
+                filtered_moves.push(*r#move);
+            }
+        }
+
+        filtered_moves
+    }
+
     pub fn get_checker(&self, square: Square) -> Checker {
         self.data[(square.y * BOARD_HEIGHT + square.x) as usize]
     }
@@ -249,7 +277,7 @@ impl CheckersGame {
         self.data[(square.y * BOARD_HEIGHT + square.x) as usize] = checker;
     }
 
-    fn in_bounds(sq: Square) -> bool {
+    pub fn in_bounds(sq: Square) -> bool {
         (sq.x < BOARD_WIDTH) && (sq.y < BOARD_HEIGHT)
     }
 }
