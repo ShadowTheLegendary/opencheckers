@@ -13,19 +13,19 @@ const KING_MOVEGEN_OFFSETS: [(i32, i32); 4] = [(-1, -1), (1, -1), (1, 1), (-1, 1
 
 pub const BLANK_CHECKER: Checker = Checker{occupied: false, color: CheckerColor::Black, rank: CheckerRank::Soldier};
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum CheckerColor {
     Black,
     Red
 }
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum CheckerRank {
     Soldier,
     King
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Checker {
     pub occupied: bool,
     pub color: CheckerColor,
@@ -120,6 +120,7 @@ impl Checker {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct CheckersGame {
     data: [Checker; 64],
     pub turn: CheckerColor,

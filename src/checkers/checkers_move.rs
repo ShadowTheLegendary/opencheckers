@@ -1,7 +1,7 @@
 pub const BLACK_CORONATION_Y: u64 = 7;
 pub const RED_CORONATION_Y: u64 = 0;
 
-#[derive(Clone, Copy, Hash, Eq, PartialEq, Debug)]
+#[derive(Hash, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Square {
     pub x: u64,
     pub y: u64
