@@ -34,21 +34,59 @@ jobs:
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
 
-      - name: Rename binary
-        shell: bash
-        run: |
-          cd target/${{ matrix.target }}/release/
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            cp checkers.exe opencheckers-windows.exe
-          else
-            cp checkers opencheckers-${{ matrix.artifact }}
-          fi
+      - name: Package binary (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: cp target/${{ matrix.target }}/release/checkers opencheckers-linux
 
-      - name: Upload artifact
+      - name: Package binary (Windows)
+        if: matrix.os == 'windows-latest'
+        run: cp target/${{ matrix.target }}/release/checkers.exe opencheckers-windows.exe
+
+      - name: Package app bundle (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          mkdir -p OpenCheckers.app/Contents/MacOS
+          cp target/${{ matrix.target }}/release/checkers OpenCheckers.app/Contents/MacOS/opencheckers
+          cat > OpenCheckers.app/Contents/Info.plist << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleName</key>
+              <string>OpenCheckers</string>
+              <key>CFBundleExecutable</key>
+              <string>opencheckers</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.yourname.opencheckers</string>
+              <key>CFBundleVersion</key>
+              <string>1.0</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+          </dict>
+          </plist>
+          EOF
+          zip -r opencheckers-macos.zip OpenCheckers.app
+
+      - name: Upload artifact (Linux)
+        if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: opencheckers-${{ matrix.artifact }}
-          path: target/${{ matrix.target }}/release/opencheckers-${{ matrix.artifact }}${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+          name: opencheckers-linux
+          path: opencheckers-linux
+
+      - name: Upload artifact (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: opencheckers-windows
+          path: opencheckers-windows.exe
+
+      - name: Upload artifact (macOS)
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: opencheckers-macos
+          path: opencheckers-macos.zip
 
   release:
     needs: build
