@@ -1,7 +1,7 @@
 pub const BLACK_CORONATION_Y: u64 = 7;
 pub const RED_CORONATION_Y: u64 = 0;
 
-#[derive(Hash, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Hash, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Square {
     pub x: u64,
     pub y: u64
@@ -20,7 +20,7 @@ impl Square {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct CheckersMove {
     pub start: Square,
     pub end: Square,

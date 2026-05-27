@@ -11,6 +11,7 @@ use macroquad::texture::Texture2D;
 
 use std::collections::HashSet;
 
+#[derive(Clone, PartialEq)]
 pub struct  CheckersGUI {
     textures: [Texture2D; 5]
 }

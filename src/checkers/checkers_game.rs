@@ -13,19 +13,19 @@ const KING_MOVEGEN_OFFSETS: [(i32, i32); 4] = [(-1, -1), (1, -1), (1, 1), (-1, 1
 
 pub const BLANK_CHECKER: Checker = Checker{occupied: false, color: CheckerColor::Black, rank: CheckerRank::Soldier};
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum CheckerColor {
     Black,
     Red
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum CheckerRank {
     Soldier,
     King
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Checker {
     pub occupied: bool,
     pub color: CheckerColor,
@@ -193,28 +193,6 @@ impl CheckersGame {
             self.turn = match self.turn { CheckerColor::Black => CheckerColor::Red, CheckerColor::Red => CheckerColor::Black };
             self.forced_move = None;
         }
-    }
-
-    pub fn to_str(&self) -> String {
-        let mut output: String = String::new();
-        for y in 0..BOARD_HEIGHT {
-            for x in 0..BOARD_WIDTH {
-                let checker: Checker = self.get_checker(Square{ x, y });
-                if !checker.occupied {
-                    output += "- ";
-                } else {
-                    output += match (checker.color, checker.rank) {
-                        (CheckerColor::Black, CheckerRank::Soldier) => "b ",
-                        (CheckerColor::Black, CheckerRank::King) => "B ",
-                        (CheckerColor::Red, CheckerRank::Soldier) => "r ",
-                        (CheckerColor::Red, CheckerRank::King) => "R "
-                    };
-                }
-            }
-            output += "\n";
-        }
-
-        output
     }
 
     pub fn get_legal_moves(&self) -> Vec<CheckersMove> {

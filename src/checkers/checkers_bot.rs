@@ -5,13 +5,16 @@ pub struct CheckersBot;
 impl CheckersBot {
     pub fn get_best_move(position: &CheckersGame, maximizing_player: bool) -> CheckersMove {
         let legal_moves = position.get_legal_moves();
+        if legal_moves.is_empty() {
+            return CheckersMove::new();
+        }
         let mut best_move = legal_moves[0];
         let mut best_eval = if maximizing_player { i64::MIN } else { i64::MAX };
 
         for r#move in &legal_moves {
             let mut position = *position;
             position.make_move(r#move);
-            let eval = CheckersBot::minimax(&position, 5, !maximizing_player);
+            let eval = CheckersBot::minimax(&position, 10, i64::MIN, i64::MAX, !maximizing_player);
 
             if (maximizing_player && (eval > best_eval)) || (!maximizing_player && (eval < best_eval)) {
                 best_move = *r#move;
@@ -19,10 +22,12 @@ impl CheckersBot {
             }
         }
 
+        println!("eval: {}", best_eval);
+
         best_move
     }
 
-    fn minimax(position: &CheckersGame, depth: u64, maximizing_player: bool) -> i64 {
+    fn minimax(position: &CheckersGame, depth: u64, alpha: i64, beta: i64 , maximizing_player: bool) -> i64 {
         let legal_moves = position.get_legal_moves();
 
         if (depth == 0) || legal_moves.is_empty() {
@@ -30,15 +35,23 @@ impl CheckersBot {
         }
 
         let mut best_eval = if maximizing_player { i64::MIN } else { i64::MAX };
-        // let mut best_move: CheckersMove = CheckersMove::new();
+
+        let mut alpha: i64 = alpha;
+        let mut beta: i64 = beta;
 
         for r#move in &legal_moves {
             let mut position = *position;
             position.make_move(r#move);
-            let eval = CheckersBot::minimax(&position, depth - 1, !maximizing_player);
+            let eval = CheckersBot::minimax(&position, depth - 1, alpha, beta, !maximizing_player);
 
             if (maximizing_player && (eval > best_eval)) || (!maximizing_player && (eval < best_eval)) {
                 best_eval = eval;
+            }
+            alpha = if maximizing_player { i64::max(alpha, best_eval) } else { alpha };
+            beta = if !maximizing_player { i64::min(beta, best_eval) } else { beta };
+
+            if beta <= alpha {
+                break;
             }
         }
 
