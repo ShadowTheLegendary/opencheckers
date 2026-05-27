@@ -15,13 +15,13 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            artifact: opencheckers-linux
+            artifact: linux
           - os: macos-latest
             target: x86_64-apple-darwin
-            artifact: opencheckers-macos
+            artifact: macos
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            artifact: opencheckers-windows.exe
+            artifact: windows
 
     steps:
       - uses: actions/checkout@v4
@@ -34,11 +34,21 @@ jobs:
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
 
+      - name: Rename binary
+        shell: bash
+        run: |
+          cd target/${{ matrix.target }}/release/
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            cp checkers.exe opencheckers-windows.exe
+          else
+            cp checkers opencheckers-${{ matrix.artifact }}
+          fi
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact }}
-          path: target/${{ matrix.target }}/release/checkers${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+          name: opencheckers-${{ matrix.artifact }}
+          path: target/${{ matrix.target }}/release/opencheckers-${{ matrix.artifact }}${{ matrix.os == 'windows-latest' && '.exe' || '' }}
 
   release:
     needs: build
