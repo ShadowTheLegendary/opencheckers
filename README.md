@@ -16,3 +16,11 @@ If you see a warning about the app being unverified, run this in Terminal:
 xattr -cr OpenCheckers.app && open OpenCheckers.app
 ```
 After the first run you can launch the app as usual.
+
+If you built from source you will need to:
+```bash
+xattr -cr opencheckers-macos
+chmod +x opencheckers-macos
+./opencheckers-macos
+```
+You will need to run it from the command line every time.
