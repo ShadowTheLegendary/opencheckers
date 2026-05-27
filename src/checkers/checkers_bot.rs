@@ -22,8 +22,6 @@ impl CheckersBot {
             }
         }
 
-        println!("eval: {}", best_eval);
-
         best_move
     }
 
