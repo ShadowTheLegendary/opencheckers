@@ -13,6 +13,6 @@ cargo build --release
 ## macOS
 If you see a warning about the app being unverified, run this in Terminal:
 ```bash
-xattr -d com.apple.quarantine opencheckers-macos
+xattr -cr OpenCheckers.app && open OpenCheckers.app
 ```
-Then double-click the binary as normal.
+After the first run you can launch the app as usual.
