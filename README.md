@@ -9,3 +9,10 @@ cd opencheckers
 cargo build --release
 ./target/release/checkers
 ```
+
+## macOS
+If you see a warning about the app being unverified, run this in Terminal:
+```bash
+xattr -d com.apple.quarantine opencheckers-macos
+```
+Then double-click the binary as normal.
