@@ -19,8 +19,8 @@ After the first run you can launch the app as usual.
 
 If you built from source you will need to:
 ```bash
-xattr -cr opencheckers-macos
-chmod +x opencheckers-macos
-./opencheckers-macos
+xattr -cr /target/release/checkers
+chmod +x /target/release/checkers
+./target/release/checkers
 ```
 You will need to run it from the command line every time.
