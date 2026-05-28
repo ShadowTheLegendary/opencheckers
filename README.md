@@ -17,7 +17,7 @@ xattr -cr OpenCheckers.app && open OpenCheckers.app
 ```
 After the first run you can launch the app as usual.
 
-If you built from source you will need to:
+If you built from source:
 ```bash
 xattr -cr /target/release/checkers
 chmod +x /target/release/checkers
