@@ -259,4 +259,8 @@ impl CheckersGame {
     pub fn in_bounds(sq: Square) -> bool {
         (sq.x < BOARD_WIDTH) && (sq.y < BOARD_HEIGHT)
     }
+
+    pub fn data(&self) -> [Checker; 64] {
+        self.data
+    }
 }

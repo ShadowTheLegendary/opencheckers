@@ -15,6 +15,8 @@ async fn main() {
 
     let gui: CheckersGUI = CheckersGUI::new();
 
+    let mut bot: CheckersBot = CheckersBot::new();
+
     let mut chosen_move: CheckersMove = CheckersMove::new();
     let mut has_start: bool = false;
     let mut moves_from_start: Vec<CheckersMove> = Vec::new();
@@ -22,6 +24,8 @@ async fn main() {
 
     loop {
         clear_background(BLACK);
+
+        gui.draw(&game, &Vec::new(), Square::new());
 
         if game.turn == CheckerColor::Red {
             let mouse_pos = mouse_position();
@@ -73,7 +77,7 @@ async fn main() {
             
             gui.draw(&game, &moves_from_start, chosen_move.start);
         } else {
-            let bot_move: CheckersMove = CheckersBot::get_best_move(&game, true);
+            let bot_move: CheckersMove = bot.get_best_move(&game, true);
             game.make_move(&bot_move);
             gui.draw(&game, &Vec::new(), Square::new());
         }
