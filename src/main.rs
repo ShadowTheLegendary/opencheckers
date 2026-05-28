@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use crate::checkers::checkers_bot::CheckersBot;
 use crate::checkers::checkers_game::{CheckerColor, CheckersGame};
 use crate::checkers::checkers_gui::CheckersGUI;
@@ -77,7 +79,7 @@ async fn main() {
             
             gui.draw(&game, &moves_from_start, chosen_move.start);
         } else {
-            let bot_move: CheckersMove = bot.get_best_move(&game, true);
+            let bot_move: CheckersMove = bot.get_best_move(&game, true, Duration::from_millis(500));
             game.make_move(&bot_move);
             gui.draw(&game, &Vec::new(), Square::new());
         }

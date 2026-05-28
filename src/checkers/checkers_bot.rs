@@ -1,3 +1,6 @@
+use core::time;
+use std::time::{Duration, Instant};
+
 use crate::checkers::{checkers_bot::transposition_table::TTFlag, checkers_game::{BOARD_HEIGHT, BOARD_WIDTH, CheckerColor, CheckerRank, CheckersGame}, checkers_move::{CheckersMove, Square}};
 use crate::checkers::checkers_bot::transposition_table::TranspositionTable;
 use crate::checkers::checkers_bot::transposition_table::ZobristHashing;
@@ -14,29 +17,52 @@ impl CheckersBot {
         CheckersBot {tt: TranspositionTable::new(64), zobrist: ZobristHashing::register() }
     }
 
-    pub fn get_best_move(&mut self, position: &CheckersGame, maximizing_player: bool) -> CheckersMove {
-        let legal_moves = position.get_legal_moves();
+    pub fn get_best_move(&mut self, position: &CheckersGame, maximizing_player: bool, time_limit: Duration) -> CheckersMove {
+        let deadline: Instant = Instant::now() + time_limit;
+
+        let mut legal_moves = position.get_legal_moves();
         if legal_moves.is_empty() {
             return CheckersMove::new();
         }
         let mut best_move = legal_moves[0];
         let mut best_eval = if maximizing_player { i32::MIN } else { i32::MAX };
+        let mut best_index: usize = 0;
 
-        for r#move in &legal_moves {
-            let mut position = *position;
-            position.make_move(r#move);
-            let eval = self.minimax(&position, 11, i32::MIN, i32::MAX, !maximizing_player);
+        let mut depth: u64 = 5;
 
-            if (maximizing_player && (eval > best_eval)) || (!maximizing_player && (eval < best_eval)) {
-                best_move = *r#move;
-                best_eval = eval;
+        loop {
+            for i in 0..legal_moves.len() {
+                let mut position = *position;
+                position.make_move(&legal_moves[i]);
+                let eval = self.minimax(&position, depth, i32::MIN, i32::MAX, !maximizing_player, deadline);
+
+                if Instant::now() > deadline {
+                    break;
+                }
+
+                if (maximizing_player && (eval > best_eval)) || (!maximizing_player && (eval < best_eval)) {
+                    best_move = legal_moves[i];
+                    best_eval = eval;
+                    best_index = i;
+                }
             }
+
+            if Instant::now() > deadline {
+                break;
+            }
+
+            if let Ok(best_move @ 1..) = usize::try_from(best_index) && 
+            let Some(to_rotate) = legal_moves.get_mut(0..best_move) {
+                to_rotate.rotate_right(1);
+            }
+
+            depth += 2;
         }
 
         best_move
     }
 
-    fn minimax(&mut self, position: &CheckersGame, depth: u64, alpha: i32, beta: i32 , maximizing_player: bool) -> i32 {
+    fn minimax(&mut self, position: &CheckersGame, depth: u64, alpha: i32, beta: i32 , maximizing_player: bool, deadline: Instant) -> i32 {
         let original_alpha = alpha;
         let hash = self.zobrist.hash(&position.data());
 
@@ -84,7 +110,11 @@ impl CheckersBot {
         for i in 0..legal_moves.len() {
             let mut position = *position;
             position.make_move(&legal_moves[i]);
-            let eval = self.minimax(&position, depth - 1, alpha, beta, !maximizing_player);
+            let eval = self.minimax(&position, depth - 1, alpha, beta, !maximizing_player, deadline);
+
+            if Instant::now() >= deadline {
+                return 0;
+            }
 
             if (maximizing_player && (eval > best_eval)) || (!maximizing_player && (eval < best_eval)) {
                 best_eval = eval;
