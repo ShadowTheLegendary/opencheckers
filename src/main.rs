@@ -79,7 +79,7 @@ async fn main() {
             
             gui.draw(&game, &moves_from_start, chosen_move.start);
         } else {
-            let bot_move: CheckersMove = bot.get_best_move(&game, true, Duration::from_millis(500));
+            let bot_move: CheckersMove = bot.get_best_move(&game, true, Duration::from_secs(1));
             game.make_move(&bot_move);
             gui.draw(&game, &Vec::new(), Square::new());
         }

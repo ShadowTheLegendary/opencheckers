@@ -1,4 +1,3 @@
-use core::time;
 use std::time::{Duration, Instant};
 
 use crate::checkers::{checkers_bot::transposition_table::TTFlag, checkers_game::{BOARD_HEIGHT, BOARD_WIDTH, CheckerColor, CheckerRank, CheckersGame}, checkers_move::{CheckersMove, Square}};
@@ -19,6 +18,7 @@ impl CheckersBot {
 
     pub fn get_best_move(&mut self, position: &CheckersGame, maximizing_player: bool, time_limit: Duration) -> CheckersMove {
         let deadline: Instant = Instant::now() + time_limit;
+        let mut position: CheckersGame = *position;
 
         let mut legal_moves = position.get_legal_moves();
         if legal_moves.is_empty() {
@@ -28,11 +28,12 @@ impl CheckersBot {
         let mut best_eval = if maximizing_player { i32::MIN } else { i32::MAX };
         let mut best_index: usize = 0;
 
-        let mut depth: u64 = 5;
+        let piece_count = position.get_piece_count();
+        let mut depth: u64 = if piece_count > 8 { 5 } else { 10 };
 
         loop {
             for i in 0..legal_moves.len() {
-                let mut position = *position;
+                let mut position = position;
                 position.make_move(&legal_moves[i]);
                 let eval = self.minimax(&position, depth, i32::MIN, i32::MAX, !maximizing_player, deadline);
 
@@ -54,15 +55,18 @@ impl CheckersBot {
             if let Ok(best_move @ 1..) = usize::try_from(best_index) && 
             let Some(to_rotate) = legal_moves.get_mut(0..best_move) {
                 to_rotate.rotate_right(1);
+                best_index = 0;
             }
 
-            depth += 2;
+            depth += if piece_count > 8 { 2 } else { 4 };
         }
 
         best_move
     }
 
     fn minimax(&mut self, position: &CheckersGame, depth: u64, alpha: i32, beta: i32 , maximizing_player: bool, deadline: Instant) -> i32 {
+        let mut position: CheckersGame = *position;
+        let depth = depth;
         let original_alpha = alpha;
         let hash = self.zobrist.hash(&position.data());
 
@@ -94,21 +98,21 @@ impl CheckersBot {
         let mut legal_moves = position.get_legal_moves();
 
         if (depth == 0) || legal_moves.is_empty() {
-            return CheckersBot::evaluate(position);
+            return CheckersBot::evaluate(&position);
         }
 
         if let Some(tt_entry) = option_tt_entry
         // required to be >= 1 for rotate_right
         && let Ok(best_move @ 1..) = usize::try_from(tt_entry.best_move) 
         && let Some(to_rotate) = legal_moves.get_mut(0..best_move) {
-        to_rotate.rotate_right(1);
+            to_rotate.rotate_right(1);
         }
 
         let mut best_eval = if maximizing_player { i32::MIN } else { i32::MAX };
-        let mut best_move: u8 = 255;
+        let mut best_move: u8 = 0;
 
         for i in 0..legal_moves.len() {
-            let mut position = *position;
+            let mut position = position;
             position.make_move(&legal_moves[i]);
             let eval = self.minimax(&position, depth - 1, alpha, beta, !maximizing_player, deadline);
 
@@ -136,6 +140,13 @@ impl CheckersBot {
     }
 
     fn evaluate(position: &CheckersGame) -> i32 {
+        if let Some(winner) = position.winner {
+            return match winner {
+                CheckerColor::Black => i32::MAX,
+                CheckerColor::Red => i32::MIN,
+            }
+        }
+
         let mut eval: i32 = 0;
 
         for y in 0..BOARD_HEIGHT {
@@ -146,10 +157,10 @@ impl CheckersBot {
                 }
 
                 eval += match (checker.color, checker.rank) {
-                    (CheckerColor::Black, CheckerRank::Soldier) => 1,
-                    (CheckerColor::Black, CheckerRank::King) => 3,
-                    (CheckerColor::Red, CheckerRank::Soldier) => -1,
-                    (CheckerColor::Red, CheckerRank::King) => -3 
+                    (CheckerColor::Black, CheckerRank::Soldier) => 10,
+                    (CheckerColor::Black, CheckerRank::King) => 25,
+                    (CheckerColor::Red, CheckerRank::Soldier) => -10,
+                    (CheckerColor::Red, CheckerRank::King) => -25
                 }
             }
         }

@@ -124,7 +124,9 @@ impl Checker {
 pub struct CheckersGame {
     data: [Checker; 64],
     pub turn: CheckerColor,
-    forced_move: Option<Square>
+    forced_move: Option<Square>,
+    pub piece_count: i32,
+    pub winner: Option<CheckerColor>
 }
 
 impl CheckersGame {
@@ -132,7 +134,9 @@ impl CheckersGame {
         CheckersGame{ 
             data: [BLANK_CHECKER; 64],
             turn: CheckerColor::Black,
-            forced_move: None
+            forced_move: None,
+            piece_count: 24,
+            winner: None
         }
     }
 
@@ -195,15 +199,23 @@ impl CheckersGame {
         }
     }
 
-    pub fn get_legal_moves(&self) -> Vec<CheckersMove> {
+    pub fn get_legal_moves(&mut self) -> Vec<CheckersMove> {
         let mut moves: Vec<CheckersMove> = Vec::new();
         let mut found_capture: bool = false;
+
+        let mut red_count = 0;
+        let mut black_count = 0;
 
         if self.forced_move == None {
             for y in 0..BOARD_HEIGHT {
                 for x in 0..BOARD_WIDTH {
                     let square: Square = Square { x, y };
                     let checker: Checker = self.get_checker(square);
+                    match checker.color {
+                        CheckerColor::Black => {black_count += 1}
+                        CheckerColor::Red => {red_count += 1}
+                    }
+
                     if !checker.occupied || checker.color != self.turn {
                         continue;
                     }
@@ -232,10 +244,19 @@ impl CheckersGame {
             return checker_moves;
         }
 
+        self.piece_count = black_count + red_count;
+
+        if black_count == 0 {
+            self.winner = Some(CheckerColor::Black);
+        }
+        if red_count == 0 {
+            self.winner = Some(CheckerColor::Red);
+        }
+
         moves
     }
 
-    pub fn get_checker_legal_moves(&self, square: Square) -> Vec<CheckersMove> {
+    pub fn get_checker_legal_moves(&mut self, square: Square) -> Vec<CheckersMove> {
         let moves: Vec<CheckersMove> = self.get_legal_moves();
         let mut filtered_moves: Vec<CheckersMove> = Vec::new();
 
@@ -262,5 +283,19 @@ impl CheckersGame {
 
     pub fn data(&self) -> [Checker; 64] {
         self.data
+    }
+
+    pub fn get_piece_count(&self) -> u64 {
+        let mut count = 0;
+
+        for y in 0..BOARD_HEIGHT {
+            for x in 0..BOARD_WIDTH {
+                if self.get_checker(Square { x, y }).occupied {
+                    count += 1;
+                }
+            }
+        }
+
+        count
     }
 }
