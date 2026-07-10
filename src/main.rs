@@ -10,7 +10,17 @@ pub mod checkers;
 
 use macroquad::prelude::*;
 
-#[macroquad::main("Checkers")]
+fn window_conf() -> Conf {
+    Conf {
+        window_title: "Checkers".to_owned(),
+        window_width: 576,
+        window_height: 576,
+        window_resizable: false,
+        ..Default::default()
+    }
+}
+
+#[macroquad::main(window_conf)]
 async fn main() {
     let mut game: CheckersGame = CheckersGame::new();
     game.setup();
