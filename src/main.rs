@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use crate::checkers::checkers_bot::CheckersBot;
 use crate::checkers::checkers_game::{CheckerColor, CheckersGame};
 use crate::checkers::checkers_gui::CheckersGUI;
@@ -10,7 +8,29 @@ pub mod checkers;
 
 use macroquad::prelude::*;
 
-#[macroquad::main("Checkers")]
+use getrandom::Error;
+
+unsafe extern "C" {
+    fn js_random_fill(ptr: *mut u8, len: usize);
+}
+
+#[unsafe(no_mangle)]
+unsafe extern "Rust" fn __getrandom_v03_custom(dest: *mut u8, len: usize) -> Result<(), Error> {
+    unsafe { js_random_fill(dest, len); }
+    Ok(())
+}
+
+fn window_conf() -> Conf {
+    Conf {
+        window_title: "Checkers".to_owned(),
+        window_width: 576,
+        window_height: 576,
+        window_resizable: false,
+        ..Default::default()
+    }
+}
+
+#[macroquad::main(window_conf)]
 async fn main() {
     let mut game: CheckersGame = CheckersGame::new();
     game.setup();
@@ -79,7 +99,7 @@ async fn main() {
             
             gui.draw(&game, &moves_from_start, chosen_move.start);
         } else {
-            let bot_move: CheckersMove = bot.get_best_move(&game, true, Duration::from_secs(1));
+            let bot_move: CheckersMove = bot.get_best_move(&game, true, 1.);
             game.make_move(&bot_move);
             gui.draw(&game, &Vec::new(), Square::new());
         }

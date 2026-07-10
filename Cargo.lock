@@ -71,6 +71,7 @@ dependencies = [
 name = "checkers"
 version = "0.1.0"
 dependencies = [
+ "getrandom",
  "macroquad",
  "rand",
 ]

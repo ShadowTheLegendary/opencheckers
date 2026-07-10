@@ -1,10 +1,10 @@
-use std::time::{Duration, Instant};
-
 use crate::checkers::{checkers_bot::transposition_table::TTFlag, checkers_game::{BOARD_HEIGHT, BOARD_WIDTH, CheckerColor, CheckerRank, CheckersGame}, checkers_move::{CheckersMove, Square}};
 use crate::checkers::checkers_bot::transposition_table::TranspositionTable;
 use crate::checkers::checkers_bot::transposition_table::ZobristHashing;
 
 mod transposition_table;
+
+use macroquad::time::get_time;
 
 pub struct CheckersBot {
     tt: TranspositionTable,
@@ -16,8 +16,9 @@ impl CheckersBot {
         CheckersBot {tt: TranspositionTable::new(64), zobrist: ZobristHashing::register() }
     }
 
-    pub fn get_best_move(&mut self, position: &CheckersGame, maximizing_player: bool, time_limit: Duration) -> CheckersMove {
-        let deadline: Instant = Instant::now() + time_limit;
+    // time_limit is now in seconds (f64) instead of Duration
+    pub fn get_best_move(&mut self, position: &CheckersGame, maximizing_player: bool, time_limit: f64) -> CheckersMove {
+        let deadline: f64 = get_time() + time_limit;
         let mut position: CheckersGame = *position;
 
         let mut legal_moves = position.get_legal_moves();
@@ -37,7 +38,7 @@ impl CheckersBot {
                 position.make_move(&legal_moves[i]);
                 let eval = self.minimax(&position, depth, i32::MIN, i32::MAX, !maximizing_player, deadline);
 
-                if Instant::now() > deadline {
+                if get_time() > deadline {
                     break;
                 }
 
@@ -48,7 +49,7 @@ impl CheckersBot {
                 }
             }
 
-            if Instant::now() > deadline {
+            if get_time() > deadline {
                 break;
             }
 
@@ -64,7 +65,7 @@ impl CheckersBot {
         best_move
     }
 
-    fn minimax(&mut self, position: &CheckersGame, depth: u64, alpha: i32, beta: i32 , maximizing_player: bool, deadline: Instant) -> i32 {
+    fn minimax(&mut self, position: &CheckersGame, depth: u64, alpha: i32, beta: i32, maximizing_player: bool, deadline: f64) -> i32 {
         let mut position: CheckersGame = *position;
         let depth = depth;
         let original_alpha = alpha;
@@ -102,7 +103,6 @@ impl CheckersBot {
         }
 
         if let Some(tt_entry) = option_tt_entry
-        // required to be >= 1 for rotate_right
         && let Ok(best_move @ 1..) = usize::try_from(tt_entry.best_move) 
         && let Some(to_rotate) = legal_moves.get_mut(0..best_move) {
             to_rotate.rotate_right(1);
@@ -116,7 +116,7 @@ impl CheckersBot {
             position.make_move(&legal_moves[i]);
             let eval = self.minimax(&position, depth - 1, alpha, beta, !maximizing_player, deadline);
 
-            if Instant::now() >= deadline {
+            if get_time() >= deadline {
                 return 0;
             }
 
