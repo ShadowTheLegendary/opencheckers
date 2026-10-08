@@ -1,10 +1,10 @@
 use std::time::Duration;
 
 use crate::checkers::checkers_bot::CheckersBot;
+use crate::checkers::checkers_game::Checker;
 use crate::checkers::checkers_game::{CheckerColor, CheckersGame};
 use crate::checkers::checkers_gui::CheckersGUI;
 use crate::checkers::checkers_move::{CheckersMove, Square};
-use crate::checkers::checkers_game::Checker;
 
 pub mod checkers;
 
@@ -43,7 +43,10 @@ async fn main() {
             let mouse_pos = mouse_position();
 
             if is_mouse_button_pressed(MouseButton::Left) {
-                let square: Square = Square { x: ((mouse_pos.0 - 32f32) as i32 / 64) as u64, y: ((mouse_pos.1 - 32f32) as i32 / 64) as u64 };
+                let square: Square = Square {
+                    x: ((mouse_pos.0 - 32f32) as i32 / 64) as u64,
+                    y: ((mouse_pos.1 - 32f32) as i32 / 64) as u64,
+                };
 
                 if CheckersGame::in_bounds(square) {
                     let checker: Checker = game.get_checker(square);
@@ -54,8 +57,7 @@ async fn main() {
                             moves_from_start = game.get_checker_legal_moves(square);
                             has_start = true;
                         }
-                    } 
-                    else if has_start && !has_end {
+                    } else if has_start && !has_end {
                         for r#move in &moves_from_start {
                             if r#move.end == square {
                                 chosen_move.end = r#move.end;
@@ -72,8 +74,6 @@ async fn main() {
                         }
                     }
                 }
-                
-                
             }
 
             if (has_start && has_end) || is_mouse_button_pressed(MouseButton::Right) {
@@ -86,7 +86,7 @@ async fn main() {
                 moves_from_start = Vec::new();
                 chosen_move = CheckersMove::new();
             }
-            
+
             gui.draw(&game, &moves_from_start, chosen_move.start);
         } else {
             let bot_move: CheckersMove = bot.get_best_move(&game, true, Duration::from_secs(1));
